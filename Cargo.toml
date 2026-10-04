@@ -1,0 +1,13 @@
+[package]
+name = "ct_from_scratch"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = { version = "0.19.0" }
+# dicom = { version = "0.10.0", features = ["pixeldata", "image", "ndarray"] }
+dicom = { version = "0.10.0", features = ["pixeldata", "ndarray"] }
+# image = "0.25.10"
+ndarray = "0.17.2"
+rayon = "1.12.0"
+bevy_framepace = "0.22.0"
