@@ -36,7 +36,6 @@ pub fn adjust_to_window_resize(
         if let Some(dim) = &dimensions {
             if let Ok(window) = window_query.single() {
                 if let Ok(mut projection) = camera_query.single_mut() {
-                    // DRY: Use helper
                     fit_camera_to_window(dim, window, &mut projection);
                 }
             }

@@ -1,10 +1,13 @@
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
-use bevy::window::{CursorMoved, PrimaryWindow};
+use bevy::tasks::AsyncComputeTaskPool;
+use bevy::window::{CursorMoved, FileDragAndDrop, PrimaryWindow};
 
 use crate::camera::fit_camera_to_window;
+use crate::dicom_loader::load_dicom;
 use crate::material::MprMaterial;
-use crate::types::{CTWindow, ImageDimensions, ViewingPlane};
+use crate::types::{CTVolumeMesh, CTWindow, ImageDimensions, ViewingPlane};
+use crate::viewer::LoadDicomTask;
 
 /// Handles middle-mouse-button panning
 pub fn pan_camera(
@@ -70,7 +73,7 @@ pub fn scroll_slices(
     dimensions: Option<ResMut<ImageDimensions>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
     mut camera_query: Query<(&mut Transform, &mut Projection), With<Camera2d>>,
-    material_query: Query<&MeshMaterial2d<MprMaterial>>,
+    material_query: Query<&MeshMaterial2d<MprMaterial>, With<CTVolumeMesh>>,
     mut materials: ResMut<Assets<MprMaterial>>,
 ) {
     let mut scroll_amount = 0.0;
@@ -99,7 +102,7 @@ pub fn scroll_slices(
             }
         }
     } else {
-        if let Ok(material_handle) = material_query.single() {
+        if let Some(material_handle) = material_query.iter().next() {
             if let Some(mut material) = materials.get_mut(material_handle) {
                 if let Some(mut dim) = dimensions {
                     // Determine how many integer slices exist based on the active plane
@@ -130,14 +133,14 @@ pub fn scroll_slices(
 pub fn handle_keyboard_inputs(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut materials: ResMut<Assets<MprMaterial>>,
-    mut mesh_query: Query<(&MeshMaterial2d<MprMaterial>, &mut Transform), Without<Camera2d>>,
+    mut mesh_query: Query<(&MeshMaterial2d<MprMaterial>, &mut Transform), (With<CTVolumeMesh>, Without<Camera2d>)>,
     dimensions: Option<ResMut<ImageDimensions>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
     mut camera_query: Query<(&mut Transform, &mut Projection), With<Camera2d>>,
 ) {
     // 1. Interpolation Toggle
     if keyboard_input.just_pressed(KeyCode::KeyI) {
-        if let Ok((material_handle, _)) = mesh_query.single() {
+        if let Some((material_handle, _)) = mesh_query.iter().next() {
             if let Some(mut material) = materials.get_mut(material_handle) {
                 material.interpolation_mode = if material.interpolation_mode == 0 {
                     1
@@ -155,7 +158,7 @@ pub fn handle_keyboard_inputs(
     if keyboard_input.just_pressed(KeyCode::Digit3) { new_plane = Some(ViewingPlane::Sagittal); }
 
     if let Some(plane) = new_plane {
-        if let Ok((material_handle, mut mesh_transform)) = mesh_query.single_mut() {
+        if let Some((material_handle, mut mesh_transform)) = mesh_query.iter_mut().next() {
             if let Some(mut dim) = dimensions {
                 dim.width = match plane {
                     ViewingPlane::Sagittal => dim.native_rows,
@@ -201,10 +204,52 @@ pub fn handle_keyboard_inputs(
     if keyboard_input.just_pressed(KeyCode::KeyH) { new_window = Some(CTWindow::BRAIN); }
 
     if let Some(window) = new_window {
-        if let Ok((material_handle, _)) = mesh_query.single() {
+        if let Some((material_handle, _)) = mesh_query.iter().next() {
             if let Some(mut material) = materials.get_mut(material_handle) {
                 material.set_window(window); // <-- Beautiful single line!
             }
         }
     }
 }
+
+/// Listens for dropped folders/files and kicks off the background loading task
+pub fn handle_drag_and_drop(
+    mut commands: Commands,
+    mut drop_events: MessageReader<FileDragAndDrop>, // <-- Using MessageReader
+    existing_tasks: Query<Entity, With<LoadDicomTask>>,
+) {
+    for event in drop_events.read() {
+        if let FileDragAndDrop::DroppedFile { path_buf, .. } = event {
+            // If they drop a folder, use it directly.
+            // If they drop an individual .dcm file, grab its parent directory!
+            let dir_path = if path_buf.is_dir() {
+                path_buf.clone()
+            } else if let Some(parent) = path_buf.parent() {
+                parent.to_path_buf()
+            } else {
+                continue;
+            };
+
+            println!("Loading DICOM volume from: {:?}", dir_path);
+
+            // Despawn any currently running background tasks so they don't conflict
+            for task_entity in &existing_tasks {
+                commands.entity(task_entity).despawn();
+            }
+
+            // Spawn the background worker thread
+            let thread_pool = AsyncComputeTaskPool::get();
+            let task = thread_pool.spawn(async move {
+                match load_dicom(&dir_path) {
+                    Ok(data) => Some(data),
+                    Err(e) => {
+                        eprintln!("Failed to load DICOM files: {}", e);
+                        None
+                    }
+                }
+            });
+
+            commands.spawn(LoadDicomTask(task));
+        }
+    }
+}  

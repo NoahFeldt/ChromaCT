@@ -1,5 +1,9 @@
 use bevy::prelude::*;
 
+/// Marker component to tag the active CT quad entity in the ECS
+#[derive(Component)]
+pub struct CTVolumeMesh;
+
 /// A global resource so the engine remembers how big the CT image is
 #[derive(Resource, Clone, Debug)]
 pub struct ImageDimensions {
