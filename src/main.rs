@@ -26,7 +26,7 @@ fn main() {
         })
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(bevy::window::Window {
-                title: "CT Viewer".into(),
+                title: "ChromaCT".into(),
                 present_mode: PresentMode::AutoNoVsync,
                 // present_mode: PresentMode::AutoVsync,
                 ..default()
