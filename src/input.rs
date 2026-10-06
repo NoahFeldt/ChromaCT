@@ -196,7 +196,16 @@ pub fn handle_keyboard_inputs(
         }
     }
 
-    // 3. Window Presets
+    // 3. Window Presets & False Color
+    if keyboard_input.just_pressed(KeyCode::KeyF) {
+        if let Some((material_handle, _)) = mesh_query.iter().next() {
+            if let Some(mut material) = materials.get_mut(material_handle) {
+                // Toggle between False Color (1) and Grayscale (0)
+                material.color_mode = if material.color_mode == 1 { 0 } else { 1 };
+            }
+        }
+    }
+
     let mut new_window = None;
     if keyboard_input.just_pressed(KeyCode::KeyS) { new_window = Some(CTWindow::SOFT_TISSUE); }
     if keyboard_input.just_pressed(KeyCode::KeyB) { new_window = Some(CTWindow::BONE); }
@@ -206,7 +215,8 @@ pub fn handle_keyboard_inputs(
     if let Some(window) = new_window {
         if let Some((material_handle, _)) = mesh_query.iter().next() {
             if let Some(mut material) = materials.get_mut(material_handle) {
-                material.set_window(window); // <-- Beautiful single line!
+                material.set_window(window);
+                material.color_mode = 0; // Returning to a preset automatically switches back to Grayscale
             }
         }
     }

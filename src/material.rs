@@ -21,10 +21,12 @@ pub struct MprMaterial {
     pub depth_fraction: f32,
     #[uniform(2)]
     pub interpolation_mode: u32,
-
-    // 0 = Transverse, 1 = Coronal, 2 = Sagittal
     #[uniform(2)]
     pub plane: u32,
+
+    // 0 = Grayscale, 1 = False Color
+    #[uniform(2)]
+    pub color_mode: u32,
 }
 
 impl MprMaterial {

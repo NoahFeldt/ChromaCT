@@ -59,6 +59,7 @@ pub fn handle_loading_task(
                         material.depth_fraction = (current_slice as f32 + 0.5) / native_rows;
                         material.plane = ViewingPlane::Coronal.as_u32();
                         material.interpolation_mode = 0;
+                        material.color_mode = 0; // <-- Reset to Grayscale
                     }
 
                     // Clean up any stray extra entities if there were any
@@ -77,6 +78,7 @@ pub fn handle_loading_task(
                             depth_fraction: (current_slice as f32 + 0.5) / native_rows,
                             interpolation_mode: 0,
                             plane: ViewingPlane::Coronal.as_u32(),
+                            color_mode: 0, // Default to Grayscale
                         })),
                         Transform::from_scale(Vec3::new(native_cols, image_height, 1.0)),
                     ));
