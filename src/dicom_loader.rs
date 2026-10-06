@@ -27,7 +27,7 @@ pub fn load_dicom(input_directory: &Path) -> Result<VolumeData, Box<dyn Error + 
         rows: usize,
         pixel_spacing: f32,
         z_position: f32,
-        instance_number: i32, // <-- ADD THIS BACK
+        instance_number: i32,
         raw_pixels: Vec<f32>
     }
 

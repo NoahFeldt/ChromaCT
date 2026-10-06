@@ -59,7 +59,7 @@ pub fn handle_loading_task(
                         material.depth_fraction = (current_slice as f32 + 0.5) / native_rows;
                         material.plane = ViewingPlane::Coronal.as_u32();
                         material.interpolation_mode = 0;
-                        material.color_mode = 0; // <-- Reset to Grayscale
+                        material.color_mode = 0; // Reset to Grayscale
                     }
 
                     // Clean up any stray extra entities if there were any

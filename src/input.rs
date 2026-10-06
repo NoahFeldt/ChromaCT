@@ -88,7 +88,6 @@ pub fn scroll_slices(
         keyboard_input.pressed(KeyCode::ShiftLeft) || keyboard_input.pressed(KeyCode::ShiftRight);
 
     if shift_pressed {
-        // [Keep your existing zoom logic exact as it is...]
         if let Some(mut dim) = dimensions {
             dim.zoom *= 1.1_f32.powf(-scroll_amount);
             dim.zoom = dim.zoom.clamp(0.05, 1.0);
@@ -225,7 +224,7 @@ pub fn handle_keyboard_inputs(
 /// Listens for dropped folders/files and kicks off the background loading task
 pub fn handle_drag_and_drop(
     mut commands: Commands,
-    mut drop_events: MessageReader<FileDragAndDrop>, // <-- Using MessageReader
+    mut drop_events: MessageReader<FileDragAndDrop>,
     existing_tasks: Query<Entity, With<LoadDicomTask>>,
 ) {
     for event in drop_events.read() {
