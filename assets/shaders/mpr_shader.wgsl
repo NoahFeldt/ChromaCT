@@ -8,7 +8,7 @@ struct MprUniforms {
     window_width: f32,
     depth_fraction: f32,
     interpolation_mode: u32,
-    plane: u32, // <-- We added this here!
+    plane: u32,
 };
 @group(2) @binding(2) var<uniform> uniforms: MprUniforms;
 
@@ -61,7 +61,7 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     
     // 4. Apply grayscale window
     let grayscale = apply_window(hounsfield_unit, uniforms.window_level, uniforms.window_width);
-    
+
     // 5. Bypass hardware Gamma tollbooth
     let final_color = pow(grayscale, 2.2);
     
